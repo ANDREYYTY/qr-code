@@ -1,0 +1,1229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>QR Генератор и Распознаватель</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: Arial, sans-serif;
+
+    background:
+        radial-gradient(circle at 20% 20%, #fff7ed 0%, transparent 30%),
+        radial-gradient(circle at 80% 30%, #fed7aa 0%, transparent 30%),
+        linear-gradient(135deg, #fff7ed, #fde68a, #fed7aa);
+
+    color: #3f2a1d;
+    overflow-x: hidden;
+}
+
+
+/* ОСНОВНОЙ КОНТЕЙНЕР */
+
+.container {
+    width: 95%;
+    max-width: 1100px;
+    margin: 40px auto;
+    position: relative;
+    z-index: 2;
+}
+
+
+/* ЗАГОЛОВОК */
+
+header {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+header h1 {
+    font-size: 44px;
+    margin: 0 0 10px;
+    color: #92400e;
+    text-shadow: 0 3px 10px rgba(120,53,15,0.15);
+}
+
+header p {
+    font-size: 18px;
+    color: #78350f;
+}
+
+
+/* ЯЗЫКИ */
+
+.languages {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+}
+
+.languages button {
+    border: none;
+    padding: 10px 18px;
+    border-radius: 20px;
+    cursor: pointer;
+
+    background: rgba(255,255,255,0.75);
+
+    color: #78350f;
+    font-weight: bold;
+
+    transition: 0.3s;
+}
+
+.languages button:hover {
+    transform: translateY(-3px);
+    background: #fff;
+    box-shadow: 0 5px 15px rgba(120,53,15,0.15);
+}
+
+
+/* КАРТОЧКИ */
+
+.main {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 25px;
+}
+
+.card {
+    background: rgba(255,255,255,0.82);
+    backdrop-filter: blur(12px);
+
+    border-radius: 28px;
+    padding: 28px;
+
+    box-shadow:
+        0 15px 35px rgba(120,53,15,0.15);
+
+    border: 1px solid rgba(255,255,255,0.8);
+}
+
+.card h2 {
+    margin-top: 0;
+    color: #9a3412;
+}
+
+
+/* ТЕКСТОВОЕ ПОЛЕ */
+
+textarea {
+    width: 100%;
+    min-height: 130px;
+
+    resize: vertical;
+
+    padding: 15px;
+
+    border: 2px solid #fed7aa;
+    border-radius: 15px;
+
+    outline: none;
+
+    font-size: 16px;
+
+    background: #fffdf9;
+}
+
+textarea:focus {
+    border-color: #f97316;
+
+    box-shadow:
+        0 0 0 4px rgba(249,115,22,0.1);
+}
+
+
+/* КНОПКИ */
+
+button.action {
+    width: 100%;
+
+    margin-top: 12px;
+
+    padding: 14px;
+
+    border: none;
+    border-radius: 15px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f97316,
+            #ea580c
+        );
+
+    color: white;
+
+    font-size: 16px;
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition: 0.3s;
+}
+
+button.action:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(234,88,12,0.3);
+}
+
+
+/* QR */
+
+#qrcode {
+    min-height: 220px;
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    margin: 15px 0;
+}
+
+#qrcode img {
+    border: 10px solid white;
+    border-radius: 12px;
+
+    box-shadow:
+        0 8px 25px rgba(0,0,0,0.12);
+}
+
+
+/* =========================
+   ОСЕННЯЯ КНОПКА ФАЙЛА
+========================= */
+
+.file-upload {
+    position: relative;
+
+    width: 100%;
+    min-height: 230px;
+
+    border: 3px dashed #d97706;
+
+    border-radius: 25px;
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(255,247,237,0.95),
+            rgba(254,215,170,0.75)
+        );
+
+    display: flex;
+
+    justify-content: center;
+    align-items: center;
+
+    text-align: center;
+
+    cursor: pointer;
+
+    overflow: hidden;
+
+    transition: 0.35s;
+}
+
+
+/* Эффект при наведении */
+
+.file-upload:hover {
+    transform: translateY(-4px);
+
+    border-color: #ea580c;
+
+    background:
+        linear-gradient(
+            135deg,
+            #fff7ed,
+            #fed7aa
+        );
+
+    box-shadow:
+        0 12px 30px rgba(154,52,18,0.18);
+}
+
+
+/* Убираем настоящий input */
+
+.file-upload input {
+    display: none;
+}
+
+
+/* Внутренний контент */
+
+.upload-content {
+    position: relative;
+    z-index: 2;
+
+    padding: 20px;
+}
+
+
+/* Большой значок */
+
+.upload-icon {
+    font-size: 60px;
+
+    margin-bottom: 10px;
+
+    animation:
+        leafFloat 3s ease-in-out infinite;
+}
+
+
+/* Главный текст */
+
+.upload-title {
+    font-size: 20px;
+
+    font-weight: bold;
+
+    color: #9a3412;
+
+    margin-bottom: 8px;
+}
+
+
+/* Подсказка */
+
+.upload-subtitle {
+    font-size: 14px;
+
+    color: #92400e;
+
+    opacity: 0.8;
+}
+
+
+/* Листья внутри кнопки */
+
+.upload-leaves {
+    position: absolute;
+
+    inset: 0;
+
+    pointer-events: none;
+
+    font-size: 30px;
+
+    opacity: 0.35;
+}
+
+.upload-leaves span {
+    position: absolute;
+}
+
+.upload-leaves span:nth-child(1) {
+    left: 10%;
+    top: 15%;
+    transform: rotate(-25deg);
+}
+
+.upload-leaves span:nth-child(2) {
+    right: 10%;
+    top: 20%;
+    transform: rotate(30deg);
+}
+
+.upload-leaves span:nth-child(3) {
+    left: 15%;
+    bottom: 15%;
+    transform: rotate(20deg);
+}
+
+.upload-leaves span:nth-child(4) {
+    right: 15%;
+    bottom: 12%;
+    transform: rotate(-35deg);
+}
+
+
+/* РЕЗУЛЬТАТ */
+
+#resultBox {
+    margin-top: 20px;
+
+    padding: 18px;
+
+    border-radius: 15px;
+
+    background: #fff7ed;
+
+    border: 1px solid #fed7aa;
+
+    word-break: break-word;
+}
+
+#resultTitle {
+    font-weight: bold;
+    margin-bottom: 8px;
+}
+
+#result {
+    font-weight: bold;
+    color: #9a3412;
+}
+
+#scanStatus {
+    margin-top: 12px;
+
+    color: #78350f;
+
+    font-weight: bold;
+}
+
+
+/* FOOTER */
+
+footer {
+    text-align: center;
+
+    margin-top: 30px;
+
+    color: #78350f;
+
+    font-weight: bold;
+}
+
+
+/* =========================
+   ПАДАЮЩИЕ ЛИСТЬЯ
+========================= */
+
+.leaf {
+    position: fixed;
+
+    top: -70px;
+
+    z-index: 9999;
+
+    pointer-events: none;
+
+    user-select: none;
+
+    animation-name: fall;
+
+    animation-timing-function: linear;
+
+    animation-fill-mode: forwards;
+}
+
+@keyframes fall {
+
+    0% {
+        transform:
+            translateY(-70px)
+            translateX(0)
+            rotate(0deg);
+
+        opacity: 0;
+    }
+
+    10% {
+        opacity: 1;
+    }
+
+    30% {
+        transform:
+            translateY(30vh)
+            translateX(100px)
+            rotate(100deg);
+    }
+
+    60% {
+        transform:
+            translateY(65vh)
+            translateX(-80px)
+            rotate(230deg);
+    }
+
+    100% {
+        transform:
+            translateY(110vh)
+            translateX(120px)
+            rotate(400deg);
+
+        opacity: 0;
+    }
+}
+
+
+@keyframes leafFloat {
+
+    0%, 100% {
+        transform: translateY(0) rotate(-3deg);
+    }
+
+    50% {
+        transform: translateY(-7px) rotate(3deg);
+    }
+}
+
+
+/* АДАПТИВ */
+
+@media (max-width: 800px) {
+
+    .main {
+        grid-template-columns: 1fr;
+    }
+
+    header h1 {
+        font-size: 30px;
+    }
+
+    .container {
+        margin: 20px auto;
+    }
+
+    .file-upload {
+        min-height: 200px;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<div class="container">
+
+
+<header>
+
+    <h1 id="title">
+    QR Генератор
+    </h1>
+
+    <p id="subtitle">
+        Создавайте и распознавайте QR-коды
+    </p>
+
+</header>
+
+
+<!-- ЯЗЫКИ -->
+
+<div class="languages">
+
+    <button onclick="changeLanguage('ru')">
+        🇷🇺 Русский
+    </button>
+
+    <button onclick="changeLanguage('kk')">
+        🇰🇿 Қазақша
+    </button>
+
+    <button onclick="changeLanguage('en')">
+        🇬🇧 English
+    </button>
+
+</div>
+
+
+<div class="main">
+
+
+<!-- =========================
+     ГЕНЕРАТОР
+========================= -->
+
+<div class="card">
+
+    <h2 id="generateTitle">
+        ✨ Создать QR-код
+    </h2>
+
+
+    <textarea
+        id="textInput"
+        placeholder="Введите текст или ссылку..."
+    ></textarea>
+
+
+    <button
+        class="action"
+        onclick="generateQR()"
+        id="generateButton"
+    >
+        Создать QR-код
+    </button>
+
+
+    <div id="qrcode"></div>
+
+
+    <button
+        class="action"
+        onclick="downloadQR()"
+        id="downloadButton"
+    >
+        ⬇ Скачать QR-код
+    </button>
+
+</div>
+
+
+
+<!-- =========================
+     РАСПОЗНАВАТЕЛЬ
+========================= -->
+
+<div class="card">
+
+    <h2 id="scanTitle">
+        📷 Распознать QR-код
+    </h2>
+
+
+    <!-- КРАСИВАЯ ОСЕННЯЯ КНОПКА -->
+
+    <label class="file-upload">
+
+        <input
+            type="file"
+            id="fileInput"
+            accept="image/*"
+            onchange="scanImage(event)"
+        >
+
+
+        <div class="upload-leaves">
+
+            <span>🍂</span>
+            <span>🍁</span>
+            <span>🍃</span>
+            <span>🍂</span>
+
+        </div>
+
+
+        <div class="upload-content">
+
+            <div class="upload-icon">
+                🔍
+            </div>
+
+            <div
+                class="upload-title"
+                id="uploadTitle"
+            >
+                Выберите изображение
+            </div>
+
+            <div
+                class="upload-subtitle"
+                id="uploadSubtitle"
+            >
+                Нажмите сюда, чтобы загрузить QR-код
+            </div>
+
+        </div>
+
+    </label>
+
+
+    <div id="scanStatus">
+        Ожидание QR-кода...
+    </div>
+
+
+    <div id="resultBox">
+
+        <div id="resultTitle">
+            Результат:
+        </div>
+
+        <div id="result">
+            Здесь появится распознанный текст
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+
+<footer>
+     VATK college ❤️ 
+</footer>
+
+
+</div>
+
+
+<!-- Скрытый canvas -->
+
+<canvas
+    id="canvas"
+    style="display:none;"
+></canvas>
+
+
+
+<script>
+
+
+/* =========================
+   ПЕРЕВОДЫ
+========================= */
+
+const translations = {
+
+    ru: {
+
+        title: "🍂 QR Генератор",
+
+        subtitle:
+            "Создавайте и распознавайте QR-коды",
+
+        generateTitle:
+            "✨ Создать QR-код",
+
+        placeholder:
+            "Введите текст или ссылку...",
+
+        generateButton:
+            "Создать QR-код",
+
+        downloadButton:
+            "⬇ Скачать QR-код",
+
+        scanTitle:
+            "🍁 Распознать QR-код",
+
+        uploadTitle:
+            "Выберите изображение",
+
+        uploadSubtitle:
+            "Нажмите сюда, чтобы загрузить QR-код",
+
+        waiting:
+            "Ожидание QR-кода...",
+
+        resultTitle:
+            "Результат:",
+
+        resultEmpty:
+            "Здесь появится распознанный текст",
+
+        qrCreated:
+            "✓ QR-код создан!",
+
+        enterText:
+            "❗ Введите текст или ссылку",
+
+        imageRead:
+            "🔍 Распознаём QR-код...",
+
+        qrFound:
+            "✓ QR-код успешно распознан!",
+
+        qrNotFound:
+            "❌ QR-код не найден"
+
+    },
+
+
+    kk: {
+
+        title:
+            "🍂 QR Генераторы",
+
+        subtitle:
+            "QR кодтарын жасаңыз және таныңыз",
+
+        generateTitle:
+            "✨ QR код жасау",
+
+        placeholder:
+            "Мәтін немесе сілтемені енгізіңіз...",
+
+        generateButton:
+            "QR код жасау",
+
+        downloadButton:
+            "⬇ QR кодты жүктеу",
+
+        scanTitle:
+            "🍁 QR кодты тану",
+
+        uploadTitle:
+            "Суретті таңдаңыз",
+
+        uploadSubtitle:
+            "QR кодты жүктеу үшін осы жерді басыңыз",
+
+        waiting:
+            "QR код күтілуде...",
+
+        resultTitle:
+            "Нәтиже:",
+
+        resultEmpty:
+            "Танылған мәтін осы жерде пайда болады",
+
+        qrCreated:
+            "✓ QR код жасалды!",
+
+        enterText:
+            "❗ Мәтін немесе сілтемені енгізіңіз",
+
+        imageRead:
+            "🔍 QR коды танылуда...",
+
+        qrFound:
+            "✓ QR коды сәтті танылды!",
+
+        qrNotFound:
+            "❌ QR коды табылмады"
+
+    },
+
+
+    en: {
+
+        title:
+            "🍂 QR Generator",
+
+        subtitle:
+            "Create and recognize QR codes",
+
+        generateTitle:
+            "✨ Create QR Code",
+
+        placeholder:
+            "Enter text or link...",
+
+        generateButton:
+            "Create QR Code",
+
+        downloadButton:
+            "⬇ Download QR Code",
+
+        scanTitle:
+            "🍁 Recognize QR Code",
+
+        uploadTitle:
+            "Choose an image",
+
+        uploadSubtitle:
+            "Click here to upload a QR code",
+
+        waiting:
+            "Waiting for QR code...",
+
+        resultTitle:
+            "Result:",
+
+        resultEmpty:
+            "Recognized text will appear here",
+
+        qrCreated:
+            "✓ QR code created!",
+
+        enterText:
+            "❗ Enter text or link",
+
+        imageRead:
+            "🔍 Reading QR code...",
+
+        qrFound:
+            "✓ QR code successfully recognized!",
+
+        qrNotFound:
+            "❌ QR code not found"
+
+    }
+
+};
+
+
+let currentLanguage = "ru";
+
+
+/* =========================
+   СМЕНА ЯЗЫКА
+========================= */
+
+function changeLanguage(language) {
+
+    currentLanguage = language;
+
+    const t = translations[language];
+
+
+    document.getElementById("title").textContent =
+        t.title;
+
+    document.getElementById("subtitle").textContent =
+        t.subtitle;
+
+    document.getElementById("generateTitle").textContent =
+        t.generateTitle;
+
+    document.getElementById("textInput").placeholder =
+        t.placeholder;
+
+    document.getElementById("generateButton").textContent =
+        t.generateButton;
+
+    document.getElementById("downloadButton").textContent =
+        t.downloadButton;
+
+    document.getElementById("scanTitle").textContent =
+        t.scanTitle;
+
+    document.getElementById("uploadTitle").textContent =
+        t.uploadTitle;
+
+    document.getElementById("uploadSubtitle").textContent =
+        t.uploadSubtitle;
+
+    document.getElementById("resultTitle").textContent =
+        t.resultTitle;
+
+}
+
+
+/* =========================
+   QR ГЕНЕРАТОР
+========================= */
+
+let qrCode = null;
+
+
+function generateQR() {
+
+    const text =
+        document.getElementById("textInput")
+        .value
+        .trim();
+
+
+    const t =
+        translations[currentLanguage];
+
+
+    if (!text) {
+
+        alert(t.enterText);
+
+        return;
+    }
+
+
+    const qrContainer =
+        document.getElementById("qrcode");
+
+
+    qrContainer.innerHTML = "";
+
+
+    qrCode = new QRCode(
+
+        qrContainer,
+
+        {
+
+            text: text,
+
+            width: 200,
+
+            height: 200,
+
+            colorDark: "#000000",
+
+            colorLight: "#ffffff",
+
+            correctLevel:
+                QRCode.CorrectLevel.H
+
+        }
+
+    );
+
+
+    document.getElementById("scanStatus")
+        .textContent = t.qrCreated;
+
+}
+
+
+/* =========================
+   СКАЧАТЬ QR
+========================= */
+
+function downloadQR() {
+
+    const qrContainer =
+        document.getElementById("qrcode");
+
+
+    const image =
+        qrContainer.querySelector("img");
+
+
+    if (!image) {
+
+        alert(
+            translations[currentLanguage]
+            .enterText
+        );
+
+        return;
+    }
+
+
+    const link =
+        document.createElement("a");
+
+
+    link.href =
+        image.src;
+
+
+    link.download =
+        "my_qr_code.png";
+
+
+    link.click();
+
+}
+
+
+/* =========================
+   РАСПОЗНАВАНИЕ ФАЙЛА
+========================= */
+
+function scanImage(event) {
+
+    const file =
+        event.target.files[0];
+
+
+    if (!file) return;
+
+
+    const t =
+        translations[currentLanguage];
+
+
+    document.getElementById("scanStatus")
+        .textContent = t.imageRead;
+
+
+    const reader =
+        new FileReader();
+
+
+    reader.onload = function(e) {
+
+        const image =
+            new Image();
+
+
+        image.onload = function() {
+
+            const canvas =
+                document.getElementById("canvas");
+
+
+            const ctx =
+                canvas.getContext(
+                    "2d",
+                    {
+                        willReadFrequently: true
+                    }
+                );
+
+
+            canvas.width =
+                image.width;
+
+
+            canvas.height =
+                image.height;
+
+
+            ctx.drawImage(
+                image,
+                0,
+                0,
+                canvas.width,
+                canvas.height
+            );
+
+
+            const imageData =
+                ctx.getImageData(
+                    0,
+                    0,
+                    canvas.width,
+                    canvas.height
+                );
+
+
+            const code =
+                jsQR(
+                    imageData.data,
+                    imageData.width,
+                    imageData.height
+                );
+
+
+            if (code) {
+
+                document.getElementById("result")
+                    .textContent = code.data;
+
+
+                document.getElementById("scanStatus")
+                    .textContent = t.qrFound;
+
+            }
+
+            else {
+
+                document.getElementById("result")
+                    .textContent = t.qrNotFound;
+
+
+                document.getElementById("scanStatus")
+                    .textContent = t.qrNotFound;
+
+            }
+
+        };
+
+
+        image.src =
+            e.target.result;
+
+    };
+
+
+    reader.readAsDataURL(file);
+
+}
+
+
+/* =========================
+   ПАДАЮЩИЕ ЛИСТЬЯ
+========================= */
+
+const leaves = [
+    "🍂",
+    "🍁",
+    "🍃",
+    "🍂",
+    "🍁",
+    "🍂"
+];
+
+
+function createLeaf() {
+
+    const leaf =
+        document.createElement("div");
+
+
+    leaf.className =
+        "leaf";
+
+
+    leaf.textContent =
+        leaves[
+            Math.floor(
+                Math.random() *
+                leaves.length
+            )
+        ];
+
+
+    leaf.style.left =
+        Math.random() *
+        100 +
+        "vw";
+
+
+    leaf.style.fontSize =
+        (20 + Math.random() * 25)
+        + "px";
+
+
+    leaf.style.animationDuration =
+        (6 + Math.random() * 5)
+        + "s";
+
+
+    leaf.style.animationDelay =
+        Math.random() * 1.5
+        + "s";
+
+
+    document.body.appendChild(leaf);
+
+
+    setTimeout(
+        () => leaf.remove(),
+        12000
+    );
+
+}
+
+
+/* Первые листья */
+
+for (
+    let i = 0;
+    i < 25;
+    i++
+) {
+
+    setTimeout(
+        createLeaf,
+        i * 180
+    );
+
+}
+
+
+/* Новые листья */
+
+setInterval(
+    createLeaf,
+    900
+);
+
+
+/* Язык по умолчанию */
+
+changeLanguage("ru");
+
+</script>
+
+</body>
+</html>
